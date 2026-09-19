@@ -1,0 +1,67 @@
+# Consolidated dependencies referenced across code/. Not every topic needs every
+# package — install per-topic as you work through it. Version-pin once you start
+# running these for real; names below are current as of authoring.
+
+# Core
+pydantic>=2.0
+fastapi
+uvicorn
+pytest
+hypothesis
+httpx
+
+# Data / math / ML
+numpy
+pandas
+matplotlib
+torch
+torchvision
+
+# Tokenization / transformers ecosystem
+tiktoken
+transformers
+peft
+trl
+bitsandbytes
+accelerate
+datasets
+
+# LLM provider SDKs
+anthropic
+openai
+ollama
+boto3
+
+# Agents / orchestration
+langgraph
+mcp
+
+# Embeddings / vector search / RAG
+rank_bm25
+sentence-transformers
+networkx
+psycopg[binary]
+pgvector
+qdrant-client
+
+# Document processing
+pymupdf
+pypdf
+pdfplumber
+pytesseract
+pillow
+reportlab
+
+# Serving
+vllm
+
+# Eval / observability
+ragas
+langfuse
+structlog
+
+# Notes:
+# - `tesseract` OS binary required for pytesseract (not pip-installable: `brew install tesseract` / `apt-get install tesseract-ocr`).
+# - `vllm` requires a CUDA GPU; not usable on this machine for actual serving, code is reference-only until you have GPU access.
+# - `ragas` API differs meaningfully between 0.1.x and 0.2.x — check `ragas.__version__` against code/16-evaluation/02-intermediate/ragas_eval_rag.py's comments before relying on it.
+# - `langfuse` client-object style (`Langfuse().trace()`) vs newer `@observe` decorator style — check your installed version against code/18-llmops/02-intermediate/langfuse_traced_rag/tracer.py's comments.

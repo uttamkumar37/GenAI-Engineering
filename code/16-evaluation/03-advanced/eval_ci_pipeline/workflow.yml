@@ -1,0 +1,36 @@
+# Reference GitHub Actions workflow for this repo's eval suite. NOT wired into real CI —
+# copy to .github/workflows/eval.yml at the repo root to activate. Kept here since this
+# repo's actual CI wiring is out of scope for the learning exercises.
+name: eval-suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-eval-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ragas datasets || echo "optional ragas deps unavailable, fallback metrics will be used"
+
+      - name: Run eval suite (rule-based + LLM-judge + RAGAS fallback)
+        run: python code/16-evaluation/03-advanced/eval_ci_pipeline/run_eval_suite.py
+
+      - name: Upload score history artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-scores-history
+          path: code/16-evaluation/03-advanced/eval_ci_pipeline/scores_history.json
+          if-no-files-found: ignore

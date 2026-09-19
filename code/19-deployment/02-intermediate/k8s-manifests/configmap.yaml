@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capstone-api-config
+  namespace: default
+data:
+  LLM_PROVIDER: "openai"
+  LLM_MODEL: "gpt-4o-mini"
+  VECTOR_DB_HOST: "postgres"
+  VECTOR_DB_PORT: "5432"
+  VECTOR_DB_NAME: "capstone"

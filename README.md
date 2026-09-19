@@ -44,6 +44,34 @@ Topics, in build order:
 20. [Java Integration](theory/20-java-integration/README.md)
 21. [GenAI System Design & Interview Prep](theory/21-genai-system-design-interview-prep/README.md)
 
+## Setup
+
+`pip install -r requirements.txt` for the Python side (install per-topic as you go — not every
+topic needs every package). Java topics (`code/20-java-integration/`) are standalone Maven
+projects, each with its own `pom.xml`. Real LLM calls need `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`
+in a local `.env` (gitignored, never commit it) — every script that needs one says so in a
+one-line comment at the top, and every intermediate/advanced pipeline also ships a fake/mock
+client so it runs offline without credentials.
+
+## Known API-surface items to verify before relying on them
+
+These libraries move fast; the code was written against documented patterns but should be
+double-checked against your installed version before treating it as ground truth:
+
+- **LangGraph** (`10-agents`) — `StateGraph`/`add_conditional_edges` API
+- **MCP SDK** (`11-mcp`) — `FastMCP` decorator surface; the RAG server's auth is simplified to a
+  tool argument rather than the SDK's real per-request auth mechanism
+- **peft / trl** (`13-fine-tuning`) — `SFTConfig` kwarg placement has moved across releases
+- **ragas** (`16-evaluation`) — API changed materially between 0.1.x and 0.2.x; a dependency-free
+  fallback scorer is included so the eval harness works either way
+- **langfuse** (`18-llmops`) — client-object (`.trace()/.span()`) vs newer `@observe` decorator
+  style; a fallback in-process tracer is included
+- **Spring AI / MCP Java SDK** (`20-java-integration`) — young, fast-moving framework; the MCP
+  Java client is a plain JSON-RPC/stdio implementation since no stable official SDK class names
+  were confirmed
+- **AWS Bedrock** (`19-deployment`) — Anthropic-on-Bedrock request body shape should be
+  spot-checked against current Bedrock docs
+
 ## Milestones
 
 - `milestones/phase1-project/` — Transformers Internals Explainer

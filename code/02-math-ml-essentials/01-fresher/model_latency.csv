@@ -1,0 +1,7 @@
+model,provider,latency_ms,tokens,cost_usd
+gpt-4o,openai,850,120,0.02
+claude-3.5-sonnet,anthropic,700,150,0.018
+gemini-1.5-pro,google,900,110,0.015
+gpt-4o,openai,820,130,0.021
+claude-3.5-sonnet,anthropic,680,160,0.019
+gemini-1.5-pro,google,910,100,0.014

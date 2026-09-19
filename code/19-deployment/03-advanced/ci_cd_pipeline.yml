@@ -1,0 +1,66 @@
+# Reference GitHub Actions pipeline — illustrative only, not wired to a real .github/workflows/ in this repo.
+name: capstone-ci-cd
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest -q
+
+  eval-gate:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      # placeholder: Topic 16 eval suite must pass a quality/regression threshold before build proceeds
+      - name: run eval suite and enforce quality gate
+        run: pytest tests/evals -q --eval-threshold=0.85
+
+  build:
+    needs: eval-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: build image
+        run: docker build -t ${{ vars.IMAGE_REGISTRY }}/capstone-api:${{ github.sha }} .
+      - name: push image
+        env:
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          echo "$REGISTRY_TOKEN" | docker login ${{ vars.IMAGE_REGISTRY }} -u ci --password-stdin
+          docker push ${{ vars.IMAGE_REGISTRY }}/capstone-api:${{ github.sha }}
+
+  canary-deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: echo "$KUBE_CONFIG" | base64 -d > kubeconfig.yaml
+      - name: deploy canary (10% traffic)
+        run: |
+          kubectl --kubeconfig kubeconfig.yaml set image deployment/capstone-api-canary \
+            capstone-api=${{ vars.IMAGE_REGISTRY }}/capstone-api:${{ github.sha }}
+          kubectl --kubeconfig kubeconfig.yaml rollout status deployment/capstone-api-canary --timeout=120s
+      - name: watch canary error rate then promote
+        run: |
+          ./scripts/watch_canary_metrics.sh --deployment capstone-api-canary --duration 300s
+          kubectl --kubeconfig kubeconfig.yaml set image deployment/capstone-api \
+            capstone-api=${{ vars.IMAGE_REGISTRY }}/capstone-api:${{ github.sha }}
+          kubectl --kubeconfig kubeconfig.yaml rollout status deployment/capstone-api --timeout=180s
